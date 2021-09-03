@@ -1,4 +1,4 @@
-package datocms
+package client
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 )
 
 // HostURL - Default DatoCMS URL
-const HostURL string = "https://site-api.datocms.com/site"
+const HostURL string = "https://site-api.datocms.com/"
 
 // Client -
 type Client struct {
@@ -44,8 +44,14 @@ func NewClient(host *string, authToken *string, datoEnvironment *string) (*Clien
 func (c *Client) doRequest(req *http.Request) ([]byte, error) {
 
 	tokenParam := "Bearer " + c.Token
+	// Set required headers
+	req.Header.Set("accept", "application/json") 
+	req.Header.Set("content-type", "application/json")
 
-	req.Header.Set("Authorization", tokenParam)
+	req.Header.Set("Authorization", tokenParam) // Set the Auth Header
+	req.Header.Set("X-Environment", c.DatoEnvironment) // Set the Dato Environment Header
+	req.Header.Set("X-Api-Version", "3") // Set the Dato Environment Header
+
 
 	res, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -53,9 +59,15 @@ func (c *Client) doRequest(req *http.Request) ([]byte, error) {
 	}
 	defer res.Body.Close()
 
+	// fmt.Println(req.Response.Body)
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
+	}
+
+	if res.StatusCode == http.StatusCreated {
+		fmt.Println(res.StatusCode)
+		return body, err
 	}
 
 	if res.StatusCode != http.StatusOK {
